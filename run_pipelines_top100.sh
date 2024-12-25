@@ -1,0 +1,1 @@
+sh run_cv.sh gemma-7b-it cv_subtopic_suggestions_gemma7b_top100 subtopics_suggestions_top100

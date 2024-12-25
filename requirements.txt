@@ -1,0 +1,7 @@
+deepspeed
+accelerate
+peft
+sentencepiece
+sentence_transformers
+flagembedding
+pyndeval
