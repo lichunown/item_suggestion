@@ -23,7 +23,7 @@ train_epochs = 10
 device = 'cuda'
 data_dir = '../diversification_data/cross_validation/subtopics_suggestions'
 fold = 1
-select_reformulate_func = reformulate_sentence_v3
+select_reformulate_func = reformulate_sentence_v1
 
 model_save_dir = f'./cpkts/{select_reformulate_func.__name__}_fold_{fold}'
 os.makedirs(model_save_dir, exist_ok=True)
