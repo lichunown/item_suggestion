@@ -15,7 +15,8 @@ from transformers import get_scheduler
 import torch.nn as nn
 from sklearn.metrics import precision_score, f1_score, recall_score
 from pyndeval import SubtopicQrel, ScoredDoc
-
+from config import base_model_type
+from bce import load_bce_embedding, load_bce_rerank
 
 lr = 5e-6
 batch_size = 4
@@ -23,12 +24,19 @@ train_epochs = 10
 device = 'cuda'
 data_dir = '../diversification_data/cross_validation/subtopics_suggestions'
 fold = 1
-select_reformulate_func = reformulate_sentence_v1
+select_reformulate_func = reformulate_sentence_v3
 
-model_save_dir = f'./cpkts/{select_reformulate_func.__name__}_fold_{fold}'
+
+if base_model_type == 'bce_embedding':
+    model = PairwiseClassificationModel().to(device)
+elif base_model_type == 'bce_rerank':
+    _, model = load_bce_rerank()
+
+
+model_save_dir = f'./cpkts/{select_reformulate_func.__name__}_fold_{fold}_{base_model_type}'
 os.makedirs(model_save_dir, exist_ok=True)
 
-model = PairwiseClassificationModel().to(device)
+
 optimizer = AdamW(model.parameters(), lr=lr)
 
 train_dataset = OnceTrainDataset(data_dir, fold, reformulate_func=select_reformulate_func)
@@ -57,6 +65,10 @@ def train_loop(dataloader, model, loss_fn, optimizer, lr_scheduler, epoch, total
         X, y = X.to(device), y.to(device)
         y = y.view(-1, 1).float()
         pred = model(**X)
+
+        if base_model_type == 'bce_rerank':
+            pred = pred.logits
+
         loss = loss_fn(pred, y)
 
         optimizer.zero_grad()
@@ -81,6 +93,9 @@ def test_loop(dataloader, model, mode='Test'):
             labels = y[0] # batch size == 1
             qid = qids[0]
             pred = model(**X)
+            if base_model_type == 'bce_rerank':
+                pred = pred.logits
+
             for label, score in zip(labels, torch.sigmoid(pred).detach().cpu().numpy()):
                 run_list.append(ScoredDoc(str(qid), label, score))
     dict_result = pyndeval.ndeval(valid_dataset.qrels_all(), run_list, measures=["alpha-nDCG@20"])

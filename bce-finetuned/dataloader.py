@@ -4,12 +4,17 @@ import json
 import torch
 from pyndeval import SubtopicQrel
 from torch.utils.data import Dataset, DataLoader
-from bce import load_bce_embedding
+from bce import load_bce_embedding, load_bce_rerank
 import pickle as pk
 from functools import cache
+from config import base_model_type
 
 
-tokenizer, _ = load_bce_embedding()
+if base_model_type == 'bce_embedding':
+    tokenizer, _ = load_bce_embedding()
+elif base_model_type == 'bce_rerank':
+    tokenizer, _ = load_bce_rerank()
+
 
 abs_file_path = os.path.split(__file__)[0]
 
